@@ -3,10 +3,10 @@
 /**
  * Twiggy - Twig template engine implementation for CodeIgniter
  *
- * Twiggy is not just a simple implementation of Twig template engine 
+ * Twiggy is not just a simple implementation of Twig template engine
  * for CodeIgniter. It supports themes, layouts, templates for regular
  * apps and also for apps that use HMVC (module support).
- * 
+ *
  * @package   			CodeIgniter
  * @subpackage			Twiggy
  * @category  			Libraries
@@ -38,7 +38,7 @@ class Twiggy
 	private $_module;
 	private $_meta = array();
 	private $_rendered = FALSE;
-	
+
 	/**
 	* Constructor
 	*/
@@ -66,7 +66,7 @@ class Twiggy
 
 		// Decide whether to enable Twig cache. If it is set to be enabled, then set the path where cached files will be stored.
 		$this->_config['environment']['cache'] = ($this->_config['environment']['cache']) ? $this->_config['twig_cache_dir'] : FALSE;
-		
+
 		$this->_twig = new Twig_Environment($this->_twig_loader, $this->_config['environment']);
 		$this->_twig->setLexer(new Twig_Lexer($this->_twig, $this->_config['delimiters']));
 
@@ -81,6 +81,38 @@ class Twiggy
 			foreach($this->_config['register_functions'] as $function) $this->register_function($function);
 		}
 
+		//@todo - REGISTER A WHOLE HELPERS FUNCTIONS AT ONCE
+		if(count($this->_config['register_helper_functions']) > 0)
+		{
+			$CI =& get_instance();
+			$CI->load->library('twiggy_tools');//using an external function for processing..
+
+			foreach($this->_config['register_helper_functions'] as $hfunction)
+			{
+				$funcs = $CI->twiggy_tools->get_defined_functions_in_helper($hfunction);//use imported func
+				foreach($funcs as $func)
+				{
+					$this->register_function($func);
+				}
+			}
+		}
+
+		//@TODO - REGISTER A WHOLE LIBRARIES FUNCTIONS AT ONCE
+		if(count($this->_config['register_library_functions']) > 0)
+		{
+			foreach($this->_config['register_library_functions'] as $lfunction)
+			{
+				$CI =& get_instance();//get an instance to use
+				$CI->load->library($lfunction);//load the library
+				$libfuncs = get_class_methods($CI->$lfunction);
+				foreach($libfuncs as $func)
+				{
+					$this->register_function($func);
+				}
+			}
+		}
+
+
 		if(count($this->_config['register_filters']) > 0)
 		{
 			foreach($this->_config['register_filters'] as $filter) $this->register_filter($filter);
@@ -92,7 +124,7 @@ class Twiggy
 
 	/**
 	 * Set data
-	 * 
+	 *
 	 * @access	public
 	 * @param 	mixed  	key (variable name) or an array of variable names with values
 	 * @param 	mixed  	data
@@ -116,7 +148,7 @@ class Twiggy
 			else
 			{
 			 	$this->_data[$key] = $value;
-			}	
+			}
 		}
 
 		return $this;
@@ -124,7 +156,7 @@ class Twiggy
 
 	/**
 	 * Unset a particular variable
-	 * 
+	 *
 	 * @access	public
 	 * @param 	mixed  	key (variable name)
 	 * @return	object 	instance of this class
@@ -139,9 +171,9 @@ class Twiggy
 
 	/**
 	 * Set title
-	 * 
+	 *
 	 * @access	public
-	 * @param 	string	
+	 * @param 	string
 	 * @return	object 	instance of this class
 	 */
 
@@ -151,7 +183,7 @@ class Twiggy
 		{
 			$args = func_get_args();
 
-			// If at least one parameter is passed in to this method, 
+			// If at least one parameter is passed in to this method,
 			// call append() to either set the title or append additional
 			// string data to it.
 			call_user_func_array(array($this, 'append'), $args);
@@ -162,9 +194,9 @@ class Twiggy
 
 	/**
 	 * Append string to the title
-	 * 
+	 *
 	 * @access	public
-	 * @param 	string	
+	 * @param 	string
 	 * @return	object 	instance of this class
 	 */
 
@@ -187,9 +219,9 @@ class Twiggy
 
 	/**
 	 * Prepend string to the title
-	 * 
+	 *
 	 * @access	public
-	 * @param 	string	
+	 * @param 	string
 	 * @return	object 	instance of this class
 	 */
 
@@ -212,7 +244,7 @@ class Twiggy
 
 	/**
 	 * Set title separator
-	 * 
+	 *
 	 * @access	public
 	 * @param 	string	separator
 	 * @return	object 	instance of this class
@@ -227,7 +259,7 @@ class Twiggy
 
 	/**
 	 * Set meta data
-	 * 
+	 *
 	 * @access	public
 	 * @param 	string	name
 	 * @param	string	value
@@ -244,7 +276,7 @@ class Twiggy
 
 	/**
 	 * Unset meta data
-	 * 
+	 *
 	 * @access	public
 	 * @param 	string	(optional) name of the meta tag
 	 * @return	object	instance of this class
@@ -271,7 +303,7 @@ class Twiggy
 
 	/**
 	 * Register a function in Twig environment
-	 * 
+	 *
 	 * @access	public
 	 * @param 	string	the name of an existing function
 	 * @return	object	instance of this class
@@ -286,7 +318,7 @@ class Twiggy
 
 	/**
 	 * Register a filter in Twig environment
-	 * 
+	 *
 	 * @access	public
 	 * @param 	string	the name of an existing function
 	 * @return	object	instance of this class
@@ -305,7 +337,7 @@ class Twiggy
 	* @access	public
 	* @param 	string	name of theme to load
 	* @return	object	instance of this class
-	*/       	
+	*/
 
 	public function theme($theme)
 	{
@@ -323,7 +355,7 @@ class Twiggy
 
 	/**
 	 * Set layout
-	 * 
+	 *
 	 * @access	public
 	 * @param 	string	name of the layout
 	 * @return	object	instance of this class
@@ -339,7 +371,7 @@ class Twiggy
 
 	/**
 	 * Set template
-	 * 
+	 *
 	 * @access	public
 	 * @param 	string	name of the template file
 	 * @return	object	instance of this class
@@ -354,7 +386,7 @@ class Twiggy
 
 	/**
 	 * Compile meta data into pure HTML
-	 * 
+	 *
 	 * @access	private
 	 * @return	string	HTML
 	 */
@@ -373,7 +405,7 @@ class Twiggy
 
 	/**
 	 * Convert meta tag array to HTML code
-	 * 
+	 *
 	 * @access	private
 	 * @param 	array 	meta tag
 	 * @return	string	HTML code
@@ -386,7 +418,7 @@ class Twiggy
 
 	/**
 	 * Load template and return output object
-	 * 
+	 *
 	 * @access	private
 	 * @return	object	output
 	 */
@@ -401,7 +433,7 @@ class Twiggy
 
 	/**
 	 * Render and return compiled HTML
-	 * 
+	 *
 	 * @access	public
 	 * @param 	string	(optional) template file
 	 * @return	string	compiled HTML
@@ -455,7 +487,7 @@ class Twiggy
 	{
 		// Reset template locations array since we loaded a different theme
 		//$this->_template_locations = array();
-		
+
 		// Check if HMVC is installed.
 		// NOTE: there may be a simplier way to check it but this seems good enough.
 		if(method_exists($this->CI->router, 'fetch_module'))
